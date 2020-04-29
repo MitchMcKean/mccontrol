@@ -1,0 +1,39 @@
+{
+  "Actions": [
+    {
+      "Icon": "actionIcon",
+      "Name": "McControl",
+      "States": [
+        {
+          "Image": "actionDefaultImage",
+          "TitleAlignment": "middle",
+          "FontSize": "16"
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "Tooltip": "",
+      "UUID": "com.mitchmckean.mccontrol.action"
+    }
+  ],
+  "SDKVersion": 2,
+  "Author": "Mitch McKean",
+  "CodePath": "code.html",
+  "Description": "beta Version of McControl",
+  "Name": "Counter",
+  "Icon": "pluginIcon",
+  "URL": "https://www.mitchmckean.com",
+  "Version": "1.4",
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "10.11"
+    },
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Software": {
+    "MinimumVersion": "4.1"
+  }
+}

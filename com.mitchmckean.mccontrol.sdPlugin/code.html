@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>com.mitchmckean.mccontrol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="sdpi.css" />
+  </head>
+
+  <body>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Hello</div>
+      <input class="sdpi-item-value" id="myname" value="My name is StreamDeck" />
+    </div>
+  </body>
+  <body>
+    <script>
+      var websocket = null;
+      var pluginUUID = null;
+
+      var DestinationEnum = Object.freeze({ HARDWARE_AND_SOFTWARE: 0, HARDWARE_ONLY: 1, SOFTWARE_ONLY: 2 });
+
+      var timer;
+
+      var openHabItem = "http://192.168.151.147:8080/rest/items/LedStrip_MS_SWITCH";
+
+      var mcControlActions = {
+        type: "com.elgato.counter.action",
+
+        getStateInterval: function () {
+          console.log("getStateInterval is running...");
+          var keyDisplayValue = "OFF";
+          if (settings != null && settings.hasOwnProperty("keyDisplayValue")) {
+            keyDisplayValue = settings["keyDisplayValue"];
+          }
+          var command = "ON";
+          if (keyDisplayValue === "ON") {
+            command = "OFF";
+          }
+          var keyDisplayValue = command;
+
+          fetch(openHabItem, {
+            method: "post",
+            headers: { "Content-Type": "text/plain" },
+            body: command,
+          });
+
+          updatedSettings = {};
+          updatedSettings["keyDisplayValue"] = keyDisplayValue;
+
+          this.SetSettings(context, updatedSettings);
+
+          this.SetTitle(context, keyDisplayValue);
+        },
+
+        // onKeyDown: function (context, settings, coordinates, userDesiredState) {
+        //   timer = setTimeout(function () {
+        //     var keyDisplayValue = "HELP";
+        //     fetch(openHabItem, {
+        //       method: "get",
+        //     })
+        //       .then((response) => {
+        //         return response.json();
+        //       })
+        //       .then((data) => {
+        //         var got = data;
+        //         console.log("Catched State: " + got.state);
+        //         if (got.state === "ON") {
+        //           keyDisplayValue = "ON";
+        //         }
+        //         if (got.state === "OFF" || got.state === "NULL") {
+        //           keyDisplayValue = "OFF";
+        //         }
+        //       })
+        //       .then(() => {
+        //         console.log("Will set state: " + keyDisplayValue);
+        //         var updatedSettings = {};
+        //         updatedSettings["keyDisplayValue"] = keyDisplayValue;
+
+        //         mcControlActions.SetSettings(context, updatedSettings);
+        //         mcControlActions.SetTitle(context, keyDisplayValue);
+        //       });
+        //   }, 1500);
+        // },
+
+        onKeyUp: function (context, settings, coordinates, userDesiredState) {
+          //clearTimeout(timer);
+
+          var keyDisplayValue = "OFF";
+          if (settings != null && settings.hasOwnProperty("keyDisplayValue")) {
+            keyDisplayValue = settings["keyDisplayValue"];
+          }
+          var command = "ON";
+          if (keyDisplayValue === "ON") {
+            command = "OFF";
+          }
+          var keyDisplayValue = command;
+
+          fetch(openHabItem, {
+            method: "post",
+            headers: { "Content-Type": "text/plain" },
+            body: command,
+          });
+
+          updatedSettings = {};
+          updatedSettings["keyDisplayValue"] = keyDisplayValue;
+
+          this.SetSettings(context, updatedSettings);
+
+          this.SetTitle(context, keyDisplayValue);
+        },
+
+        onWillAppear: function (context, settings, coordinates) {
+          // Pre Doings here!
+          console.log("Will appear is running! ");
+          var keyDisplayValue = "OFF";
+          if (settings != null && settings.hasOwnProperty("keyDisplayValue")) {
+            keyDisplayValue = settings["keyDisplayValue"];
+          }
+          fetch(openHabItem, {
+            method: "get",
+          })
+            .then((response) => {
+              return response.json();
+            })
+            .then((data) => {
+              var got = data;
+              if (got.state === "ON") {
+                keyDisplayValue = "ON";
+              }
+              if (got.state === "OFF" || got.state === "NULL") {
+                keyDisplayValue = "OFF";
+              }
+            })
+            .then(() => {
+              console.log("set keyDisplayValue to: " + keyDisplayValue);
+              this.SetTitle(context, keyDisplayValue);
+            });
+        },
+
+        SetTitle: function (context, keyDisplayValue) {
+          var json = {
+            event: "setTitle",
+            context: context,
+            payload: {
+              title: "" + keyDisplayValue,
+              target: DestinationEnum.HARDWARE_AND_SOFTWARE,
+            },
+          };
+
+          websocket.send(JSON.stringify(json));
+        },
+
+        SetSettings: function (context, settings) {
+          var json = {
+            event: "setSettings",
+            context: context,
+            payload: settings,
+          };
+
+          websocket.send(JSON.stringify(json));
+        },
+      };
+
+      function connectElgatoStreamDeckSocket(inPort, inPluginUUID, inRegisterEvent, inInfo) {
+        pluginUUID = inPluginUUID;
+
+        // Open the web socket
+        websocket = new WebSocket("ws://127.0.0.1:" + inPort);
+
+        function registerPlugin(inPluginUUID) {
+          var json = {
+            event: inRegisterEvent,
+            uuid: inPluginUUID,
+          };
+
+          websocket.send(JSON.stringify(json));
+        }
+
+        websocket.onopen = function (evt) {
+          //this.intervalID = setInterval(() => mcControlActions.getStateInterval(), 3 * 1000);
+          registerPlugin(pluginUUID);
+        };
+
+        websocket.onmessage = function (evt) {
+          // Received message from Stream Deck
+          var jsonObj = JSON.parse(evt.data);
+          var event = jsonObj["event"];
+          var action = jsonObj["action"];
+          var context = jsonObj["context"];
+
+          if (event == "keyDown") {
+            var jsonPayload = jsonObj["payload"];
+            var settings = jsonPayload["settings"];
+            var coordinates = jsonPayload["coordinates"];
+            var userDesiredState = jsonPayload["userDesiredState"];
+            //mcControlActions.onKeyDown(context, settings, coordinates, userDesiredState);
+          } else if (event == "keyUp") {
+            var jsonPayload = jsonObj["payload"];
+            var settings = jsonPayload["settings"];
+            var coordinates = jsonPayload["coordinates"];
+            var userDesiredState = jsonPayload["userDesiredState"];
+            mcControlActions.onKeyUp(context, settings, coordinates, userDesiredState);
+          } else if (event == "willAppear") {
+            var jsonPayload = jsonObj["payload"];
+            var settings = jsonPayload["settings"];
+            var coordinates = jsonPayload["coordinates"];
+            mcControlActions.onWillAppear(context, settings, coordinates);
+          }
+        };
+
+        websocket.onclose = function () {
+          //clearInterval(this.intervalID);
+        };
+      }
+    </script>
+  </body>
+</html>
