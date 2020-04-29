@@ -7,13 +7,31 @@
   </head>
 
   <body>
-    <div class="sdpi-item">
-      <div class="sdpi-item-label">Hello</div>
-      <input class="sdpi-item-value" id="myname" value="My name is StreamDeck" />
-    </div>
-  </body>
-  <body>
     <script>
+      //       function sendValueToPlugin (value, param) {
+      //     if (websocket && (websocket.readyState === 1)) {
+      //       console.log("sending Value to Plugin....");
+      //         const json = {
+      //             'action': actionInfo['action'],
+      //             'event': 'sendToPlugin',
+      //             'context': uuid,
+      //             'payload': {
+      //                 [param]: value
+      //             }
+      //         };
+      //         websocket.send(JSON.stringify(json));
+      //     }
+      // }
+      //       /** the beforeunload event is fired, right before the PI will remove all nodes */
+      // window.addEventListener('beforeunload', function (e) {
+      //     e.preventDefault();
+      //     // since 4.1 this is no longer needed, as the plugin will receive a notification
+      //     // right before the Property Inspector goes away
+      //     console.log("Eventlistiner is ready");
+      //     sendValueToPlugin('propertyInspectorWillDisappear', 'property_inspector');
+      //     // Don't set a returnValue to the event, otherwise Chromium with throw an error.  // e.returnValue = '';
+      // });
+
       var websocket = null;
       var pluginUUID = null;
 
@@ -52,38 +70,40 @@
           this.SetTitle(context, keyDisplayValue);
         },
 
-        // onKeyDown: function (context, settings, coordinates, userDesiredState) {
-        //   timer = setTimeout(function () {
-        //     var keyDisplayValue = "HELP";
-        //     fetch(openHabItem, {
-        //       method: "get",
-        //     })
-        //       .then((response) => {
-        //         return response.json();
-        //       })
-        //       .then((data) => {
-        //         var got = data;
-        //         console.log("Catched State: " + got.state);
-        //         if (got.state === "ON") {
-        //           keyDisplayValue = "ON";
-        //         }
-        //         if (got.state === "OFF" || got.state === "NULL") {
-        //           keyDisplayValue = "OFF";
-        //         }
-        //       })
-        //       .then(() => {
-        //         console.log("Will set state: " + keyDisplayValue);
-        //         var updatedSettings = {};
-        //         updatedSettings["keyDisplayValue"] = keyDisplayValue;
+        onKeyDown: function (context, settings, coordinates, userDesiredState) {
+          console.log("KeydownEvent!!");
+          // timer = setTimeout(function () {
+          //   var keyDisplayValue = "HELP";
+          //   fetch(openHabItem, {
+          //     method: "get",
+          //   })
+          //     .then((response) => {
+          //       return response.json();
+          //     })
+          //     .then((data) => {
+          //       var got = data;
+          //       console.log("Catched State: " + got.state);
+          //       if (got.state === "ON") {
+          //         keyDisplayValue = "ON";
+          //       }
+          //       if (got.state === "OFF" || got.state === "NULL") {
+          //         keyDisplayValue = "OFF";
+          //       }
+          //     })
+          //     .then(() => {
+          //       console.log("Will set state: " + keyDisplayValue);
+          //       var updatedSettings = {};
+          //       updatedSettings["keyDisplayValue"] = keyDisplayValue;
 
-        //         mcControlActions.SetSettings(context, updatedSettings);
-        //         mcControlActions.SetTitle(context, keyDisplayValue);
-        //       });
-        //   }, 1500);
-        // },
+          //       mcControlActions.SetSettings(context, updatedSettings);
+          //       mcControlActions.SetTitle(context, keyDisplayValue);
+          //     });
+          // }, 1500);
+        },
 
         onKeyUp: function (context, settings, coordinates, userDesiredState) {
           //clearTimeout(timer);
+          console.log(settings);
 
           var keyDisplayValue = "OFF";
           if (settings != null && settings.hasOwnProperty("keyDisplayValue")) {
@@ -137,6 +157,11 @@
             });
         },
 
+        updateService: function (context, settings, coordinates) {
+          // Pre Doings here!
+          console.log("Update service is called! ");
+        },
+
         SetTitle: function (context, keyDisplayValue) {
           var json = {
             event: "setTitle",
@@ -176,7 +201,7 @@
           websocket.send(JSON.stringify(json));
         }
 
-        websocket.onopen = function (evt) {
+        websocket.onopen = function () {
           //this.intervalID = setInterval(() => mcControlActions.getStateInterval(), 3 * 1000);
           registerPlugin(pluginUUID);
         };
@@ -193,7 +218,7 @@
             var settings = jsonPayload["settings"];
             var coordinates = jsonPayload["coordinates"];
             var userDesiredState = jsonPayload["userDesiredState"];
-            //mcControlActions.onKeyDown(context, settings, coordinates, userDesiredState);
+            mcControlActions.onKeyDown(context, settings, coordinates, userDesiredState);
           } else if (event == "keyUp") {
             var jsonPayload = jsonObj["payload"];
             var settings = jsonPayload["settings"];
@@ -205,6 +230,11 @@
             var settings = jsonPayload["settings"];
             var coordinates = jsonPayload["coordinates"];
             mcControlActions.onWillAppear(context, settings, coordinates);
+          } else if (event == "didReceiveSettings") {
+            var jsonPayload = jsonObj["payload"];
+            var settings = jsonPayload["settings"];
+            var coordinates = jsonPayload["coordinates"];
+            mcControlActions.updateService(context, settings, coordinates);
           }
         };
 
