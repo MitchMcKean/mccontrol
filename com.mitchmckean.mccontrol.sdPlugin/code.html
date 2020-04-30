@@ -13,7 +13,6 @@
 
       var DestinationEnum = Object.freeze({ HARDWARE_AND_SOFTWARE: 0, HARDWARE_ONLY: 1, SOFTWARE_ONLY: 2 });
       var settingsCache = {};
-      var apiCommandCache = "";
       var mcControlActions = {
         type: "com.elgato.counter.action",
 
@@ -24,25 +23,17 @@
         },
 
         onKeyUp: function (context, settings, coordinates, userDesiredState) {
-          var openHabItem = settingsCache.apiLink + settingsCache.itemName;
+          var openHabItem = settings.apiLink + settings.itemName;
           fetch(openHabItem, {
             method: "post",
             headers: { "Content-Type": "text/plain" },
-            body: apiCommandCache,
+            body: settings.command,
           }).then(() => {
-            if (apiCommandCache == "ON") {
-              apiCommandCache = "OFF";
-              this.SetTitle(context, "ON");
-            } else {
-              apiCommandCache = "ON";
-              this.SetTitle(context, "OFF");
-            }
+            this.getStateFromAPI(context, settings);
           });
         },
 
         onWillAppear: function (context, settings, coordinates) {
-          console.log("init settings");
-          console.log(settings);
           if (!settings.apiLink) {
             var initConfig = {
               apiLink: "http://192.168.151.147:8080/rest/items/",
@@ -58,14 +49,12 @@
         },
 
         onSetSettings: function (context, jsonPayload) {
-          console.log(settingsCache);
           var newSettings = {};
           if (jsonPayload.itemName != undefined) {
             newSettings.itemName = jsonPayload.itemName;
             newSettings.apiLink = settingsCache.apiLink;
             settingsCache.itemName = jsonPayload.itemName;
             this.SetSettings(context, newSettings);
-            console.log(settingsCache);
           }
           if (jsonPayload.apiLink != undefined) {
             newSettings.itemName = settingsCache.itemName;
@@ -77,31 +66,35 @@
 
         getStateFromAPI: function (context, settings) {
           var keyDisplayValue = "";
+          var csX = settings;
           var openHabItem = settings.apiLink + settings.itemName;
-
-          fetch(openHabItem, {
-            method: "get",
-          })
-            .then((response) => {
-              return response.json();
+          if (settings.itemName) {
+            fetch(openHabItem, {
+              method: "get",
             })
-            .then((data) => {
-              var got = data;
-              if (got.state === "ON") {
-                keyDisplayValue = "ON";
-                apiCommandCache = "OFF";
-                this.SetState(context, 1);
-              }
-              if (got.state === "OFF" || got.state === "NULL") {
-                keyDisplayValue = "OFF";
-                apiCommandCache = "ON";
-                this.SetState(context, 0);
-              }
-            })
-            .then(() => {
-              console.log("set keyDisplayValue to: " + keyDisplayValue);
-              this.SetTitle(context, keyDisplayValue);
-            });
+              .then((response) => {
+                return response.json();
+              })
+              .then((data) => {
+                var got = data;
+                if (got.state === "ON") {
+                  keyDisplayValue = "ON";
+                  csX.command = "OFF";
+                  csX.itemState = "ON";
+                  this.SetState(context, 1);
+                }
+                if (got.state === "OFF" || got.state === "NULL") {
+                  keyDisplayValue = "OFF";
+                  csX.command = "ON";
+                  csX.itemState = "OFF";
+                  this.SetState(context, 0);
+                }
+              })
+              .then(() => {
+                this.SetTitle(context, keyDisplayValue);
+                this.SetSettings(context, csX);
+              });
+          }
         },
 
         SetTitle: function (context, keyDisplayValue) {
@@ -167,7 +160,6 @@
           var context = jsonObj["context"];
 
           if (event == "keyDown") {
-            console.log(jsonObj);
             var jsonPayload = jsonObj["payload"];
             var settings = jsonPayload["settings"];
             var coordinates = jsonPayload["coordinates"];
@@ -183,10 +175,13 @@
             var jsonPayload = jsonObj["payload"];
             var settings = jsonPayload["settings"];
             var coordinates = jsonPayload["coordinates"];
+            this.intervalID = setInterval(() => mcControlActions.getStateFromAPI(context, settings), 4 * 1000);
             mcControlActions.onWillAppear(context, settings, coordinates);
           } else if (event == "sendToPlugin") {
             var jsonPayload = jsonObj["payload"];
             mcControlActions.onSetSettings(context, jsonPayload);
+          } else if (event == "willDisappear") {
+            clearInterval(this.intervalID);
           }
         };
 
