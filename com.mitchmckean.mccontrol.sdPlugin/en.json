@@ -1,8 +1,8 @@
 {
-  "Description": "Track the number of times you press a key.", 
-  "Name": "Counter", 
+  "Description": "Simple Tool to send ON/OFF commands to an API and keep checking the state. Example use: SmartHome, openHab",
+  "Name": "McControl",
   "com.elgato.counter.action": {
-    "Name": "Counter", 
-    "Tooltip": "How many times did you get pwned today? Keep track with this counter."
+    "Name": "McControl",
+    "Tooltip": "Send ON/OFF commands to an API and check the state"
   }
 }
