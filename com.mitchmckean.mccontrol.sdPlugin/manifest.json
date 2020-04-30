@@ -1,7 +1,7 @@
 {
   "Actions": [
     {
-      "Icon": "actionIcon",
+      "Icon": "",
       "Name": "McControl",
       "States": [
         {
@@ -18,9 +18,10 @@
   "SDKVersion": 2,
   "Author": "Mitch McKean",
   "CodePath": "code.html",
+  "PropertyInspectorPath": "index_pi.html",
   "Description": "beta Version of McControl",
   "Name": "Counter",
-  "Icon": "pluginIcon",
+  "Icon": "",
   "URL": "https://www.mitchmckean.com",
   "Version": "1.4",
   "OS": [
