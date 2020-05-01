@@ -1,91 +1,49 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <title>com.mitchmckean.mccontrol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="sdpi.css" />
+  </head>
 
-<head>
-  <title>com.mitchmckean.mccontrol</title>
-  <meta charset="utf-8" />
-  <link rel="stylesheet" href="sdpi.css" />
-</head>
+  <body>
+    <script>
+      var websocket = null;
+      var pluginUUID = null;
 
-<body>
-  <script>
-    var websocket = null;
-    var pluginUUID = null;
+      var DestinationEnum = Object.freeze({ HARDWARE_AND_SOFTWARE: 0, HARDWARE_ONLY: 1, SOFTWARE_ONLY: 2 });
+      var settingsCache = {};
+      let initConfig = {
+        apiLink: "http://openhab:8080/rest/items/",
+        itemName: "",
+      };
+      var apiCallItv;
+      var apiUrlCache = "";
+      var mcControlActions = {
+        type: "com.elgato.counter.action",
 
-    var DestinationEnum = Object.freeze({ HARDWARE_AND_SOFTWARE: 0, HARDWARE_ONLY: 1, SOFTWARE_ONLY: 2 });
-    var settingsCache = {};
-    let initConfig = {
-      apiLink: "http://openhab:8080/rest/items/",
-      itemName: "",
-    };
-    var apiUrlChache = "";
-    var mcControlActions = {
-      type: "com.elgato.counter.action",
+        onKeyDown: function (context, settings, coordinates, userDesiredState) {
+          console.log(settings);
+          console.log("found link: " + settings.apiLink);
+          console.log("found item: " + settings.itemName);
+        },
 
-      onKeyDown: function (context, settings, coordinates, userDesiredState) {
-        console.log(settings);
-        console.log("found link: " + settings.apiLink);
-        console.log("found item: " + settings.itemName);
-      },
-
-      onKeyUp: function (context, settings, coordinates, userDesiredState) {
-        var openHabItem = settings.apiLink + settings.itemName;
-        fetch(openHabItem, {
-          method: "post",
-          headers: { "Content-Type": "text/plain" },
-          body: settings.command,
-        }).then(() => {
-          this.getStateFromAPI(context, settings);
-        });
-      },
-
-      onWillAppear: function (context, settings, coordinates) {
-        if (!settings.apiLink) {
-          this.SetSettings(context, initConfig);
-          settingsCache = initConfig;
-        } else if (!settings.itemName) {
-          this.SetTitle(context, "Not Init");
-        } else if (settings.apiLink && settings.itemName) {
-          this.getStateFromAPI(context, settings);
-        }
-      },
-
-      onSetSettings: function (context, jsonPayload) {
-        var newSettings = {};
-        if (jsonPayload.itemName != undefined) {
-          newSettings.itemName = jsonPayload.itemName;
-          newSettings.apiLink = settingsCache.apiLink;
-          settingsCache.itemName = jsonPayload.itemName;
-          this.SetSettings(context, newSettings);
-        }
-        if (jsonPayload.apiLink != undefined) {
-          newSettings.itemName = settingsCache.itemName;
-          newSettings.apiLink = jsonPayload.apiLink;
-          settingsCache.apiLink = jsonPayload.apiLink;
-          this.SetSettings(context, newSettings);
-        }
-      },
-
-      getStateFromAPI: function (context, settings) {
-        var keyDisplayValue = "";
-        var csX = settings;
-        var openHabItem = settings.apiLink + settings.itemName;
-        if (settings.itemName) {
+        onKeyUp: function (context, settings, coordinates, userDesiredState) {
+          var openHabItem = settings.apiLink + settings.itemName;
+          var keyDisplayValue = "";
+          var csX = settings;
           fetch(openHabItem, {
-            method: "get",
+            method: "post",
+            headers: { "Content-Type": "text/plain" },
+            body: settings.command,
           })
-            .then((response) => {
-              return response.json();
-            })
-            .then((data) => {
-              var got = data;
-              if (got.state === "ON") {
+            .then(() => {
+              if (settings.command == "ON") {
                 keyDisplayValue = "ON";
                 csX.command = "OFF";
                 csX.itemState = "ON";
                 this.SetState(context, 1);
-              }
-              if (got.state === "OFF" || got.state === "NULL") {
+              } else {
                 keyDisplayValue = "OFF";
                 csX.command = "ON";
                 csX.itemState = "OFF";
@@ -96,100 +54,172 @@
               this.SetTitle(context, keyDisplayValue);
               this.SetSettings(context, csX);
             });
-        }
-      },
+        },
 
-      SetTitle: function (context, keyDisplayValue) {
-        var json = {
-          event: "setTitle",
-          context: context,
-          payload: {
-            title: "" + keyDisplayValue,
-            target: DestinationEnum.HARDWARE_AND_SOFTWARE,
-          },
-        };
+        onWillAppear: function (context, settings, coordinates) {
+          if (!settings.apiLink && !apiUrlCache) {
+            this.SetSettings(context, initConfig);
+            settingsCache = initConfig;
+          } else if (apiUrlCache) {
+            initConfig.apiLink = apiUrlCache;
+            this.SetSettings(context, initConfig);
+            settingsCache = initConfig;
+          } else if (!settings.itemName) {
+            this.SetTitle(context, "Not Init");
+          } else if (settings.apiLink && settings.itemName) {
+            var interval = "start";
+            this.manageApiRequest(context, settings, interval);
+          }
+        },
 
-        websocket.send(JSON.stringify(json));
-      },
-
-      SetState: function (context, state) {
-        var json = {
-          event: "setState",
-          context: context,
-          payload: {
-            state: state,
-          },
-        };
-
-        websocket.send(JSON.stringify(json));
-      },
-
-      SetSettings: function (context, settings) {
-        var json = {
-          event: "setSettings",
-          context: context,
-          payload: settings,
-        };
-
-        websocket.send(JSON.stringify(json));
-      },
-    };
-
-    function connectElgatoStreamDeckSocket(inPort, inPluginUUID, inRegisterEvent, inInfo) {
-      pluginUUID = inPluginUUID;
-
-      // Open the web socket
-      websocket = new WebSocket("ws://127.0.0.1:" + inPort);
-
-      function registerPlugin(inPluginUUID) {
-        var json = {
-          event: inRegisterEvent,
-          uuid: inPluginUUID,
-        };
-
-        websocket.send(JSON.stringify(json));
-      }
-
-      websocket.onopen = function () {
-        registerPlugin(pluginUUID);
-      };
-
-      websocket.onmessage = function (evt) {
-        // Received message from Stream Deck
-        var jsonObj = JSON.parse(evt.data);
-        var event = jsonObj["event"];
-        var action = jsonObj["action"];
-        var context = jsonObj["context"];
-
-        if (event == "keyDown") {
-          var jsonPayload = jsonObj["payload"];
-          var settings = jsonPayload["settings"];
-          var coordinates = jsonPayload["coordinates"];
-          var userDesiredState = jsonPayload["userDesiredState"];
-          mcControlActions.onKeyDown(context, settings, coordinates, userDesiredState);
-        } else if (event == "keyUp") {
-          var jsonPayload = jsonObj["payload"];
-          var settings = jsonPayload["settings"];
-          var coordinates = jsonPayload["coordinates"];
-          var userDesiredState = jsonPayload["userDesiredState"];
-          mcControlActions.onKeyUp(context, settings, coordinates, userDesiredState);
-        } else if (event == "willAppear") {
-          var jsonPayload = jsonObj["payload"];
-          var settings = jsonPayload["settings"];
-          var coordinates = jsonPayload["coordinates"];
-          this.intervalID = setInterval(() => mcControlActions.getStateFromAPI(context, settings), 4 * 1000);
-          mcControlActions.onWillAppear(context, settings, coordinates);
-        } else if (event == "sendToPlugin") {
-          var jsonPayload = jsonObj["payload"];
-          mcControlActions.onSetSettings(context, jsonPayload);
-        } else if (event == "willDisappear") {
+        onSetSettings: function (context, jsonPayload) {
+          var newSettings = {};
           clearInterval(this.intervalID);
-        }
+          if (jsonPayload.itemName != undefined) {
+            newSettings.itemName = jsonPayload.itemName;
+            newSettings.apiLink = settingsCache.apiLink;
+            settingsCache.itemName = jsonPayload.itemName;
+            this.SetSettings(context, newSettings);
+          }
+          if (jsonPayload.apiLink != undefined) {
+            newSettings.itemName = settingsCache.itemName;
+            newSettings.apiLink = jsonPayload.apiLink;
+            settingsCache.apiLink = jsonPayload.apiLink;
+            this.SetSettings(context, newSettings);
+          }
+        },
+
+        getStateFromAPI: function (context, settings) {
+          var keyDisplayValue = "";
+          var csX = settings;
+          var openHabItem = settings.apiLink + settings.itemName;
+          if (settings.itemName) {
+            fetch(openHabItem, {
+              method: "get",
+            })
+              .then((response) => {
+                return response.json();
+              })
+              .then((data) => {
+                var got = data;
+                if (got.state === "ON") {
+                  keyDisplayValue = "ON";
+                  csX.command = "OFF";
+                  csX.itemState = "ON";
+                  this.SetState(context, 1);
+                }
+                if (got.state === "OFF" || got.state === "NULL") {
+                  keyDisplayValue = "OFF";
+                  csX.command = "ON";
+                  csX.itemState = "OFF";
+                  this.SetState(context, 0);
+                }
+              })
+              .then(() => {
+                this.SetTitle(context, keyDisplayValue);
+                this.SetSettings(context, csX);
+              });
+          }
+        },
+
+        SetTitle: function (context, keyDisplayValue) {
+          var json = {
+            event: "setTitle",
+            context: context,
+            payload: {
+              title: "" + keyDisplayValue,
+              target: DestinationEnum.HARDWARE_AND_SOFTWARE,
+            },
+          };
+          websocket.send(JSON.stringify(json));
+        },
+
+        SetState: function (context, state) {
+          var json = {
+            event: "setState",
+            context: context,
+            payload: {
+              state: state,
+            },
+          };
+          clearInterval(this.intervalID);
+
+          websocket.send(JSON.stringify(json));
+        },
+
+        SetSettings: function (context, settings) {
+          var json = {
+            event: "setSettings",
+            context: context,
+            payload: settings,
+          };
+
+          websocket.send(JSON.stringify(json));
+        },
+        manageApiRequest(context, settings, interval) {
+          if (interval == "start") {
+            this.getStateFromAPI(context, settings);
+            apiCallItv = setInterval(() => this.getStateFromAPI(context, settings), 5 * 1000);
+          } else if (interval == "clear") {
+            clearInterval(apiCallItv);
+          }
+        },
       };
 
-      websocket.onclose = function () { };
-    }
-  </script>
-</body>
+      function connectElgatoStreamDeckSocket(inPort, inPluginUUID, inRegisterEvent, inInfo) {
+        pluginUUID = inPluginUUID;
 
+        // Open the web socket
+        websocket = new WebSocket("ws://127.0.0.1:" + inPort);
+
+        function registerPlugin(inPluginUUID) {
+          var json = {
+            event: inRegisterEvent,
+            uuid: inPluginUUID,
+          };
+
+          websocket.send(JSON.stringify(json));
+        }
+
+        websocket.onopen = function () {
+          registerPlugin(pluginUUID);
+        };
+
+        websocket.onmessage = function (evt) {
+          // Received message from Stream Deck
+          var jsonObj = JSON.parse(evt.data);
+          var event = jsonObj["event"];
+          var action = jsonObj["action"];
+          var context = jsonObj["context"];
+
+          if (event == "keyDown") {
+            var jsonPayload = jsonObj["payload"];
+            var settings = jsonPayload["settings"];
+            var coordinates = jsonPayload["coordinates"];
+            var userDesiredState = jsonPayload["userDesiredState"];
+            mcControlActions.onKeyDown(context, settings, coordinates, userDesiredState);
+          } else if (event == "keyUp") {
+            var jsonPayload = jsonObj["payload"];
+            var settings = jsonPayload["settings"];
+            var coordinates = jsonPayload["coordinates"];
+            var userDesiredState = jsonPayload["userDesiredState"];
+            mcControlActions.onKeyUp(context, settings, coordinates, userDesiredState);
+          } else if (event == "willAppear") {
+            var jsonPayload = jsonObj["payload"];
+            var settings = jsonPayload["settings"];
+            var coordinates = jsonPayload["coordinates"];
+            mcControlActions.onWillAppear(context, settings, coordinates);
+          } else if (event == "sendToPlugin") {
+            var jsonPayload = jsonObj["payload"];
+            mcControlActions.onSetSettings(context, jsonPayload);
+          } else if (event == "willDisappear") {
+            var interval = "clear";
+            mcControlActions.manageApiRequest(context, settings, interval);
+          }
+        };
+
+        websocket.onclose = function () {};
+      }
+    </script>
+  </body>
 </html>

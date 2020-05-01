@@ -5,12 +5,12 @@
       "Name": "McControl",
       "States": [
         {
-          "Image": "keyiconON",
+          "Image": "keyiconOFF",
           "TitleAlignment": "middle",
           "FontSize": "16"
         },
         {
-          "Image": "keyiconOFF",
+          "Image": "keyiconON",
           "TitleAlignment": "middle",
           "FontSize": "16"
         }

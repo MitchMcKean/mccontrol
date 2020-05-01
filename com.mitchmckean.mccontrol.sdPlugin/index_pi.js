@@ -6,13 +6,9 @@ var websocket = null,
 
 function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo, inActionInfo) {
   uuid = inUUID;
-  // please note: the incoming arguments are of type STRING, so
-  // in case of the inActionInfo, we must parse it into JSON first
   actionInfo = JSON.parse(inActionInfo); // cache the info
   websocket = new WebSocket("ws://localhost:" + inPort);
 
-  // if connection was established, the websocket sends
-  // an 'onopen' event, where we need to register our PI
   websocket.onopen = function () {
     var json = {
       event: inRegisterEvent,
@@ -21,9 +17,23 @@ function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo, 
     // register property inspector to Stream Deck
     websocket.send(JSON.stringify(json));
   };
+  websocket.onmessage = function (evt) {
+    // Received message from Stream Deck
+    var jsonObj = JSON.parse(evt.data);
+    // var event = jsonObj["event"];
+    // var action = jsonObj["action"];
+    // var context = jsonObj["context"];
+    console.log(jsonObj);
+    // if (event == "keyDown") {
+    //   var jsonPayload = jsonObj["payload"];
+    //   var settings = jsonPayload["settings"];
+    //   var coordinates = jsonPayload["coordinates"];
+    //   var userDesiredState = jsonPayload["userDesiredState"];
+    //   mcControlActions.onKeyDown(context, settings, coordinates, userDesiredState);
+    // }
+  };
 }
 
-// our method to pass values to the plugin
 function sendValueToPlugin(value, param) {
   if (websocket) {
     const json = {
