@@ -28,7 +28,7 @@
   "Name": "McControl",
   "Icon": "pluginicon",
   "URL": "https://www.mitchmckean.com",
-  "Version": "1.0",
+  "Version": "0.5.1",
   "OS": [
     {
       "Platform": "mac",

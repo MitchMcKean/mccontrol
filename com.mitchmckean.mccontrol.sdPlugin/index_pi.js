@@ -17,22 +17,17 @@ function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo, 
     // register property inspector to Stream Deck
     websocket.send(JSON.stringify(json));
   };
-  websocket.onmessage = function (evt) {
-    // Received message from Stream Deck
-    var jsonObj = JSON.parse(evt.data);
-    // var event = jsonObj["event"];
-    // var action = jsonObj["action"];
-    // var context = jsonObj["context"];
-    console.log(jsonObj);
-    // if (event == "keyDown") {
-    //   var jsonPayload = jsonObj["payload"];
-    //   var settings = jsonPayload["settings"];
-    //   var coordinates = jsonPayload["coordinates"];
-    //   var userDesiredState = jsonPayload["userDesiredState"];
-    //   mcControlActions.onKeyDown(context, settings, coordinates, userDesiredState);
-    // }
-  };
+  // websocket.onmessage = function (evt) {
+  //   var jsonObj = JSON.parse(evt.data);
+  //   var value = jsonObj.payload.settings;
+  //   setDomElements(value);
+  // };
 }
+
+// function setDomElements(value) {
+//   document.getElementById("apiLink").innerHTML = value.apiLink;
+//   document.getElementById("itemName").innerHTML = value.itemName;
+// }
 
 function sendValueToPlugin(value, param) {
   if (websocket) {
@@ -40,9 +35,7 @@ function sendValueToPlugin(value, param) {
       action: actionInfo["action"],
       event: "sendToPlugin",
       context: uuid,
-      payload: {
-        [param]: value,
-      },
+      payload: { [param]: value },
     };
     websocket.send(JSON.stringify(json));
   }
