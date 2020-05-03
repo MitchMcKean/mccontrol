@@ -27,7 +27,7 @@
   "Description": "beta Version of McControl",
   "Name": "McControl",
   "Icon": "pluginicon",
-  "URL": "https://www.mitchmckean.com",
+  "URL": "https://github.com/MitchMcKean/mccontrol",
   "Version": "0.5.1",
   "OS": [
     {
