@@ -1,7 +1,7 @@
 {
   "Description": "Einfaches Tool um ON/OFF Befehle an eine API zu senden und dessen Status abzurufen. ZB für Smart Home / openHab.",
   "Name": "McControl",
-  "com.elgato.counter.action": {
+  "com.mitchmckean.mccontrol.action": {
     "Name": "McControl",
     "Tooltip": "On/Off Befehle an eine API senden und Status abrufen"
   }

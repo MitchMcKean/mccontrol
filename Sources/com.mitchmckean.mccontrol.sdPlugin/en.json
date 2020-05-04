@@ -1,7 +1,7 @@
 {
   "Description": "Simple Tool to send ON/OFF commands to an API and keep checking the state. Example use: SmartHome, openHab",
   "Name": "McControl",
-  "com.elgato.counter.action": {
+  "com.mitchmckean.mccontrol.action": {
     "Name": "McControl",
     "Tooltip": "Send ON/OFF commands to an API and check the state"
   }

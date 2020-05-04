@@ -24,11 +24,11 @@
   "Author": "Mitch McKean",
   "CodePath": "code.html",
   "PropertyInspectorPath": "index_pi.html",
-  "Description": "beta Version of McControl",
+  "Description": "Simple Tool to send ON/OFF commands to an API and keep checking the state. Example use: SmartHome, openHab",
   "Name": "McControl",
   "Icon": "pluginicon",
   "URL": "https://github.com/MitchMcKean/mccontrol",
-  "Version": "0.5.1",
+  "Version": "0.5.2",
   "OS": [
     {
       "Platform": "mac",
