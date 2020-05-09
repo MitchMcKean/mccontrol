@@ -17,17 +17,21 @@ function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo, 
     // register property inspector to Stream Deck
     websocket.send(JSON.stringify(json));
   };
-  // websocket.onmessage = function (evt) {
-  //   var jsonObj = JSON.parse(evt.data);
-  //   var value = jsonObj.payload.settings;
-  //   setDomElements(value);
-  // };
+  websocket.onmessage = function (evt) {
+    var jsonObj = JSON.parse(evt.data);
+    var event = jsonObj["event"];
+    // console.log(jsonObj);
+    if (event == "sendToPropertyInspector") {
+      var value = jsonObj.payload;
+      setDomElements(value);
+    }
+  };
 }
 
-// function setDomElements(value) {
-//   document.getElementById("apiLink").innerHTML = value.apiLink;
-//   document.getElementById("itemName").innerHTML = value.itemName;
-// }
+function setDomElements(value) {
+  document.getElementById("apiLink").value = value.apiLink;
+  document.getElementById("itemName").value = value.itemName;
+}
 
 function sendValueToPlugin(value, param) {
   if (websocket) {

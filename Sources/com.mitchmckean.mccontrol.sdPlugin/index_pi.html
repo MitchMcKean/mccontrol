@@ -1,37 +1,32 @@
 <!DOCTYPE html>
-    <html>
+<html>
 
-    <head>
-        <meta charset="utf-8" />
-        <meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui,viewport-fit=cover">
-        <title>PI for McControl</title>
-        <link rel="stylesheet" href="sdpi.css">
-    </head>
+<head>
+  <meta charset="utf-8" />
+  <meta name=viewport
+    content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui,viewport-fit=cover">
+  <title>PI for McControl</title>
+  <link rel="stylesheet" href="sdpi.css">
+</head>
 
-    <body>
+<body>
 
-    <div class="sdpi-wrapper">
-        <div class="sdpi-item">
-          <div class="sdpi-item-label">RestAPI-link</div>
-          <input class="sdpi-item-value" id="apiLink" value="http://openhab:8080/rest/items/" placeholder="http://192.168.151.111:8080/rest/items/" onchange="sendValueToPlugin(event.target.value, 'apiLink')" />
-        </div>
-        <div class="sdpi-item">
-          <div class="sdpi-item-label">ItemName</div>
-          <input class="sdpi-item-value" id="itemName" value="" placeholder="LedStrip_LivingRoom" onchange="sendValueToPlugin(event.target.value, 'itemName')" />
-        </div>
-
-        <div class="hidden">
-        <div class="sdpi-heading">BUTTONS</div>
-        <div class="sdpi-item" id="2buttons">
-          <div class="sdpi-item-label">2 Buttons</div> 
-          <button class="sdpi-item-value" value="ClickMe">Click Me</button>
-          <button class="sdpi-item-value" value="OrMe">Or Me</button>
-     </div>
-        </div>
+  <div class="sdpi-wrapper">
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">RestAPI-link</div>
+      <input class="sdpi-item-value" id="apiLink" value="http://openhab:8080/rest/items/"
+        placeholder="http://192.168.151.111:8080/rest/items/"
+        onchange="sendValueToPlugin(event.target.value, 'apiLink')" />
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">ItemName</div>
+      <input class="sdpi-item-value" id="itemName" value="" placeholder="LedStrip_LivingRoom"
+        onchange="sendValueToPlugin(event.target.value, 'itemName')" />
+    </div>
 
     <div>
-       <script src="index_pi.js"></script>
+      <script defer src="index_pi.js"></script>
 
-    </body>
+</body>
 
-    </html>
+</html>
